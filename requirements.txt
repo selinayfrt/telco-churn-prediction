@@ -11,3 +11,5 @@ shap
 matplotlib
 xgboost
 lightgbm
+seaborn
+optuna
