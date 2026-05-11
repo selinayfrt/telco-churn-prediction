@@ -1,0 +1,13 @@
+streamlit
+plotly
+pandas
+numpy
+catboost
+scikit-learn
+crewai
+crewai-tools
+groq
+shap
+matplotlib
+xgboost
+lightgbm
