@@ -17,36 +17,12 @@ pd.set_option('display.width', 170)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
+# ── Veri Yükleme ─────────────────────────────────────────────────────────────
 df = pd.read_csv("Telco-Customer-Churn.csv")
-
-# TotalCharges sayısal bir değişken olmalı
 df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors='coerce')
 df["Churn"] = df["Churn"].apply(lambda x: 1 if x == "Yes" else 0)
 
-##################################
-# GENEL RESİM
-##################################
-
-def check_df(dataframe, head=5):
-    print("##################### Shape #####################")
-    print(dataframe.shape)
-    print("##################### Types #####################")
-    print(dataframe.dtypes)
-    print("##################### Head #####################")
-    print(dataframe.head(head))
-    print("##################### Tail #####################")
-    print(dataframe.tail(head))
-    print("##################### NA #####################")
-    print(dataframe.isnull().sum())
-    print("##################### Quantiles #####################")
-    num_only = dataframe.select_dtypes(include=[np.number])
-    print(num_only.quantile([0, 0.05, 0.50, 0.95, 0.99, 1]).T)
-
-check_df(df)
-
-##################################
-# NUMERİK VE KATEGORİK DEĞİŞKENLERİN YAKALANMASI
-##################################
+# ── Yardımcı Fonksiyonlar ────────────────────────────────────────────────────
 
 def grab_col_names(dataframe, cat_th=10, car_th=20):
     cat_cols = [col for col in dataframe.columns if dataframe[col].dtypes == "O"]
@@ -56,94 +32,7 @@ def grab_col_names(dataframe, cat_th=10, car_th=20):
     cat_cols = [col for col in cat_cols if col not in cat_but_car]
     num_cols = [col for col in dataframe.columns if dataframe[col].dtypes != "O"]
     num_cols = [col for col in num_cols if col not in num_but_cat]
-
-    print(f"Observations: {dataframe.shape[0]}")
-    print(f"Variables: {dataframe.shape[1]}")
-    print(f'cat_cols: {len(cat_cols)}')
-    print(f'num_cols: {len(num_cols)}')
-    print(f'cat_but_car: {len(cat_but_car)}')
-    print(f'num_but_cat: {len(num_but_cat)}')
-
     return cat_cols, num_cols, cat_but_car
-
-cat_cols, num_cols, cat_but_car = grab_col_names(df)
-
-##################################
-# KATEGORİK DEĞİŞKENLERİN ANALİZİ
-##################################
-
-def cat_summary(dataframe, col_name):
-    print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
-                        "Ratio": 100 * dataframe[col_name].value_counts() / len(dataframe)}))
-    print("##########################################")
-
-for col in cat_cols:
-    cat_summary(df, col)
-
-##################################
-# NUMERİK DEĞİŞKENLERİN ANALİZİ
-##################################
-
-def num_summary(dataframe, numerical_col):
-    quantiles = [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]
-    print(dataframe[numerical_col].describe(quantiles).T)
-
-for col in num_cols:
-    num_summary(df, col)
-
-##################################
-# NUMERİK DEĞİŞKENLERİN TARGET GÖRE ANALİZİ
-##################################
-
-def target_summary_with_num(dataframe, target, numerical_col):
-    print(dataframe.groupby(target)[[numerical_col]].mean(numeric_only=True), end="\n\n\n")
-
-for col in num_cols:
-    target_summary_with_num(df, "Churn", col)
-
-##################################
-# KATEGORİK DEĞİŞKENLERİN TARGET GÖRE ANALİZİ
-##################################
-
-def target_summary_with_cat(dataframe, target, categorical_col):
-    print(categorical_col)
-    target_mean = dataframe.groupby(categorical_col)[target].mean()
-    count = dataframe[categorical_col].value_counts()
-    ratio = 100 * dataframe[categorical_col].value_counts() / len(dataframe)
-    print(pd.DataFrame({"TARGET_MEAN": target_mean, "Count": count, "Ratio": ratio}), end="\n\n\n")
-
-for col in cat_cols:
-    target_summary_with_cat(df, "Churn", col)
-
-##################################
-# KORELASYON
-##################################
-
-num_df = df.select_dtypes(include=[np.number])
-num_df.corr(numeric_only=True)
-num_df.corrwith(df["Churn"].astype(float)).sort_values(ascending=False)
-
-##################################
-# EKSİK DEĞER ANALİZİ
-##################################
-
-def missing_values_table(dataframe, na_name=False):
-    na_columns = [col for col in dataframe.columns if dataframe[col].isnull().sum() > 0]
-    n_miss = dataframe[na_columns].isnull().sum().sort_values(ascending=False)
-    ratio = (dataframe[na_columns].isnull().sum() / dataframe.shape[0] * 100).sort_values(ascending=False)
-    missing_df = pd.concat([n_miss, np.round(ratio, 2)], axis=1, keys=['n_miss', 'ratio'])
-    print(missing_df, end="\n")
-    if na_name:
-        return na_columns
-
-na_columns = missing_values_table(df, na_name=True)
-
-# FIX: inplace=True kaldırıldı (pandas 2.x uyumlu)
-df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
-
-##################################
-# AYKIRI DEĞER ANALİZİ
-##################################
 
 def outlier_thresholds(dataframe, col_name, q1=0.05, q3=0.95):
     quartile1 = dataframe[col_name].quantile(q1)
@@ -157,24 +46,34 @@ def check_outlier(dataframe, col_name):
     low_limit, up_limit = outlier_thresholds(dataframe, col_name)
     if dataframe[(dataframe[col_name] > up_limit) | (dataframe[col_name] < low_limit)].any(axis=None):
         return True
-    else:
-        return False
+    return False
 
 def replace_with_thresholds(dataframe, variable, q1=0.05, q3=0.95):
-    low_limit, up_limit = outlier_thresholds(dataframe, variable, q1=0.05, q3=0.95)
+    low_limit, up_limit = outlier_thresholds(dataframe, variable)
     dataframe.loc[(dataframe[variable] < low_limit), variable] = low_limit
     dataframe.loc[(dataframe[variable] > up_limit), variable] = up_limit
 
+def label_encoder(dataframe, binary_col):
+    labelencoder = LabelEncoder()
+    dataframe[binary_col] = labelencoder.fit_transform(dataframe[binary_col])
+    return dataframe
+
+def one_hot_encoder(dataframe, categorical_cols, drop_first=False):
+    dataframe = pd.get_dummies(dataframe, columns=categorical_cols, drop_first=drop_first)
+    return dataframe
+
+# ── Veri Ön İşleme ───────────────────────────────────────────────────────────
+
+df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
+
+cat_cols, num_cols, cat_but_car = grab_col_names(df)
+
 for col in num_cols:
-    print(col, check_outlier(df, col))
     if check_outlier(df, col):
         replace_with_thresholds(df, col)
 
-##################################
-# ÖZELLİK ÇIKARIMI
-##################################
-
-df.loc[(df["tenure"] >= 0) & (df["tenure"] <= 12), "NEW_TENURE_YEAR"] = "0-1 Year"
+# Özellik Çıkarımı
+df.loc[(df["tenure"] >= 0)  & (df["tenure"] <= 12), "NEW_TENURE_YEAR"] = "0-1 Year"
 df.loc[(df["tenure"] > 12) & (df["tenure"] <= 24), "NEW_TENURE_YEAR"] = "1-2 Year"
 df.loc[(df["tenure"] > 24) & (df["tenure"] <= 36), "NEW_TENURE_YEAR"] = "2-3 Year"
 df.loc[(df["tenure"] > 36) & (df["tenure"] <= 48), "NEW_TENURE_YEAR"] = "3-4 Year"
@@ -204,42 +103,21 @@ df["NEW_AVG_Charges"] = df["TotalCharges"] / (df["tenure"] + 1)
 df["NEW_Increase"] = df["NEW_AVG_Charges"] / df["MonthlyCharges"]
 df["NEW_AVG_Service_Fee"] = df["MonthlyCharges"] / (df['NEW_TotalServices'] + 1)
 
-##################################
-# ENCODING
-##################################
-
+# Encoding
 cat_cols, num_cols, cat_but_car = grab_col_names(df)
 
-def label_encoder(dataframe, binary_col):
-    labelencoder = LabelEncoder()
-    dataframe[binary_col] = labelencoder.fit_transform(dataframe[binary_col])
-    return dataframe
-
 binary_cols = [col for col in df.columns if df[col].dtypes == "O" and df[col].nunique() == 2]
-
 for col in binary_cols:
     df = label_encoder(df, col)
 
 cat_cols = [col for col in cat_cols if col not in binary_cols and col not in ["Churn", "NEW_TotalServices"]]
-
-def one_hot_encoder(dataframe, categorical_cols, drop_first=False):
-    dataframe = pd.get_dummies(dataframe, columns=categorical_cols, drop_first=drop_first)
-    return dataframe
-
 df = one_hot_encoder(df, cat_cols, drop_first=True)
 
-##################################
-# MODELLEME
-##################################
+# ── Modelleme ────────────────────────────────────────────────────────────────
 
 y = df["Churn"]
 X = df.drop(["Churn", "customerID"], axis=1)
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=17)
-
-##################################
-# OPTİMİZE EDİLMİŞ FİNAL MODEL
-##################################
 
 catboost_model = CatBoostClassifier(
     iterations=203,
@@ -250,10 +128,69 @@ catboost_model = CatBoostClassifier(
     random_state=12345
 ).fit(X_train, y_train)
 
-y_pred = catboost_model.predict(X_test)
+# ── EDA ve Metrikler — sadece direkt çalıştırılınca ─────────────────────────
+if __name__ == "__main__":
 
-print(f"Accuracy:  {round(accuracy_score(y_test, y_pred), 4)}")
-print(f"Recall:    {round(recall_score(y_test, y_pred), 4)}")
-print(f"Precision: {round(precision_score(y_test, y_pred), 4)}")
-print(f"F1:        {round(f1_score(y_test, y_pred), 4)}")
-print(f"AUC:       {round(roc_auc_score(y_test, catboost_model.predict_proba(X_test)[:, 1]), 4)}")
+    def check_df(dataframe, head=5):
+        print("##################### Shape #####################")
+        print(dataframe.shape)
+        print("##################### Types #####################")
+        print(dataframe.dtypes)
+        print("##################### Head #####################")
+        print(dataframe.head(head))
+        print("##################### Tail #####################")
+        print(dataframe.tail(head))
+        print("##################### NA #####################")
+        print(dataframe.isnull().sum())
+        print("##################### Quantiles #####################")
+        print(dataframe.select_dtypes(include=[np.number]).quantile([0, 0.05, 0.50, 0.95, 0.99, 1]).T)
+
+    def cat_summary(dataframe, col_name):
+        print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
+                            "Ratio": 100 * dataframe[col_name].value_counts() / len(dataframe)}))
+        print("##########################################")
+
+    def num_summary(dataframe, numerical_col):
+        quantiles = [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]
+        print(dataframe[numerical_col].describe(quantiles).T)
+
+    def target_summary_with_num(dataframe, target, numerical_col):
+        print(dataframe.groupby(target)[[numerical_col]].mean(numeric_only=True), end="\n\n\n")
+
+    def target_summary_with_cat(dataframe, target, categorical_col):
+        print(categorical_col)
+        target_mean = dataframe.groupby(categorical_col)[target].mean()
+        count = dataframe[categorical_col].value_counts()
+        ratio = 100 * dataframe[categorical_col].value_counts() / len(dataframe)
+        print(pd.DataFrame({"TARGET_MEAN": target_mean, "Count": count, "Ratio": ratio}), end="\n\n\n")
+
+    def missing_values_table(dataframe, na_name=False):
+        na_columns = [col for col in dataframe.columns if dataframe[col].isnull().sum() > 0]
+        n_miss = dataframe[na_columns].isnull().sum().sort_values(ascending=False)
+        ratio = (dataframe[na_columns].isnull().sum() / dataframe.shape[0] * 100).sort_values(ascending=False)
+        missing_df = pd.concat([n_miss, np.round(ratio, 2)], axis=1, keys=['n_miss', 'ratio'])
+        print(missing_df, end="\n")
+        if na_name:
+            return na_columns
+
+    raw_df = pd.read_csv("Telco-Customer-Churn.csv")
+    raw_df["TotalCharges"] = pd.to_numeric(raw_df["TotalCharges"], errors='coerce')
+    raw_df["Churn"] = raw_df["Churn"].apply(lambda x: 1 if x == "Yes" else 0)
+
+    check_df(raw_df)
+    cat_cols_eda, num_cols_eda, _ = grab_col_names(raw_df)
+    for col in cat_cols_eda:
+        cat_summary(raw_df, col)
+    for col in num_cols_eda:
+        num_summary(raw_df, col)
+    for col in num_cols_eda:
+        target_summary_with_num(raw_df, "Churn", col)
+    for col in cat_cols_eda:
+        target_summary_with_cat(raw_df, "Churn", col)
+
+    y_pred = catboost_model.predict(X_test)
+    print(f"Accuracy:  {round(accuracy_score(y_test, y_pred), 4)}")
+    print(f"Recall:    {round(recall_score(y_test, y_pred), 4)}")
+    print(f"Precision: {round(precision_score(y_test, y_pred), 4)}")
+    print(f"F1:        {round(f1_score(y_test, y_pred), 4)}")
+    print(f"AUC:       {round(roc_auc_score(y_test, catboost_model.predict_proba(X_test)[:, 1]), 4)}")
