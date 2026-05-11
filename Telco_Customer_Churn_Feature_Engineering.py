@@ -178,7 +178,7 @@ for col in num_cols:
 
 def target_summary_with_cat(dataframe, target, categorical_col):
     print(categorical_col)
-    print(pd.DataFrame({"TARGET_MEAN": dataframe.groupby(categorical_col)[target].mean(),
+    print(pd.DataFrame({"TARGET_MEAN": dataframe.groupby(categorical_col)[target].mean(numeric_only=True),
                         "Count": dataframe[categorical_col].value_counts(),
                         "Ratio": 100 * dataframe[categorical_col].value_counts() / len(dataframe)}), end="\n\n\n")
 
