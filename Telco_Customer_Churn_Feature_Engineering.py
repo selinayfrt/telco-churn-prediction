@@ -95,7 +95,7 @@ for col in num_cols:
 ##################################
 
 def target_summary_with_num(dataframe, target, numerical_col):
-    print(dataframe.groupby(target)[[numerical_col]].mean(), end="\n\n\n")
+    print(dataframe.groupby(target)[[numerical_col]].mean(numeric_only=True), end="\n\n\n")
 
 for col in num_cols:
     target_summary_with_num(df, "Churn", col)
