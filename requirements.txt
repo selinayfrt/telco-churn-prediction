@@ -1,6 +1,6 @@
 streamlit
 plotly
-pandas==2.0.3
+pandas
 numpy
 catboost
 scikit-learn
