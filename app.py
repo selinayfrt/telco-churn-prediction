@@ -120,14 +120,7 @@ def load_model():
     return catboost_model, X_test
 
 
-@st.cache_resource
-def load_llm():
-    from crewai import LLM
-    return LLM(
-        model="groq/llama-3.3-70b-versatile",
-        api_key=os.environ.get("GROQ_API_KEY"),
-        temperature=0.7
-    )
+# load_llm kaldırıldı - model string direkt kullanılıyor
 
 
 try:
@@ -261,7 +254,7 @@ def ai_rapor_olustur(musteri_id, prob, faktörler):
                 f"Risk Faktörleri: {', '.join(facts)}"
             )
 
-    beyin = load_llm()
+    MODEL_ADI = "groq/llama-3.3-70b-versatile"
 
     ajan = Agent(
         role="Kıdemli Müşteri Analisti",
@@ -269,7 +262,7 @@ def ai_rapor_olustur(musteri_id, prob, faktörler):
         backstory="Telekom sektöründe müşteri kaybı analizinde uzmanlaşmış bir veri analistisin.",
         tools=[ChurnTool()],
         verbose=False,
-        llm=beyin,
+        llm=MODEL_ADI,
         max_iter=3,
     )
 
@@ -323,7 +316,7 @@ def multi_agent_rapor_olustur(musteri_id, prob, faktörler):
                 f"Detaylar: {', '.join(detaylar)}"
             )
 
-    beyin = load_llm()
+    MODEL_ADI = "groq/llama-3.3-70b-versatile"
 
     analist = Agent(
         role="Kıdemli Müşteri Analisti",
@@ -331,7 +324,7 @@ def multi_agent_rapor_olustur(musteri_id, prob, faktörler):
         backstory="Telekom sektöründe uzman veri analistisin.",
         tools=[ChurnTool()],
         verbose=False,
-        llm=beyin,
+        llm=MODEL_ADI,
         max_iter=3,
     )
 
@@ -341,7 +334,7 @@ def multi_agent_rapor_olustur(musteri_id, prob, faktörler):
         backstory="Telekom pazarlamasında uzman stratejistsin. Somut ve uygulanabilir teklifler üretirsin.",
         tools=[],
         verbose=False,
-        llm=beyin,
+        llm=MODEL_ADI,
         max_iter=3,
     )
 
