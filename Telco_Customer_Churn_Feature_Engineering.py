@@ -1,6 +1,8 @@
 # Gerekli Kütüphane ve Fonksiyonlar
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 from catboost import CatBoostClassifier
@@ -16,18 +18,10 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
 df = pd.read_csv("Telco-Customer-Churn.csv")
-df.head()
-df.shape
-df.info()
 
 # TotalCharges sayısal bir değişken olmalı
 df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors='coerce')
-
 df["Churn"] = df["Churn"].apply(lambda x: 1 if x == "Yes" else 0)
-
-##################################
-# GÖREV 1: KEŞİFCİ VERİ ANALİZİ
-##################################
 
 ##################################
 # GENEL RESİM
@@ -48,7 +42,6 @@ def check_df(dataframe, head=5):
     print(dataframe.select_dtypes(include=[np.number]).quantile([0, 0.05, 0.50, 0.95, 0.99, 1]).T)
 
 check_df(df)
-
 
 ##################################
 # NUMERİK VE KATEGORİK DEĞİŞKENLERİN YAKALANMASI
@@ -72,53 +65,40 @@ def grab_col_names(dataframe, cat_th=10, car_th=20):
 
     return cat_cols, num_cols, cat_but_car
 
-
 cat_cols, num_cols, cat_but_car = grab_col_names(df)
-
 
 ##################################
 # KATEGORİK DEĞİŞKENLERİN ANALİZİ
 ##################################
 
-def cat_summary(dataframe, col_name, plot=False):
+def cat_summary(dataframe, col_name):
     print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
                         "Ratio": 100 * dataframe[col_name].value_counts() / len(dataframe)}))
     print("##########################################")
-    if plot:
-        sns.countplot(x=dataframe[col_name], data=dataframe)
-        plt.show()
 
 for col in cat_cols:
     cat_summary(df, col)
-
 
 ##################################
 # NUMERİK DEĞİŞKENLERİN ANALİZİ
 ##################################
 
-def num_summary(dataframe, numerical_col, plot=False):
+def num_summary(dataframe, numerical_col):
     quantiles = [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]
     print(dataframe[numerical_col].describe(quantiles).T)
-    if plot:
-        dataframe[numerical_col].hist(bins=20)
-        plt.xlabel(numerical_col)
-        plt.title(numerical_col)
-        plt.show()
 
 for col in num_cols:
-    num_summary(df, col, plot=True)
-
+    num_summary(df, col)
 
 ##################################
 # NUMERİK DEĞİŞKENLERİN TARGET GÖRE ANALİZİ
 ##################################
 
 def target_summary_with_num(dataframe, target, numerical_col):
-    print(dataframe.groupby(target).agg({numerical_col: "mean"}, numeric_only=True), end="\n\n\n")
+    print(dataframe.groupby(target)[[numerical_col]].mean(), end="\n\n\n")
 
 for col in num_cols:
     target_summary_with_num(df, "Churn", col)
-
 
 ##################################
 # KATEGORİK DEĞİŞKENLERİN TARGET GÖRE ANALİZİ
@@ -126,31 +106,21 @@ for col in num_cols:
 
 def target_summary_with_cat(dataframe, target, categorical_col):
     print(categorical_col)
-    print(pd.DataFrame({"TARGET_MEAN": dataframe.groupby(categorical_col)[target].mean(numeric_only=True),
-                        "Count": dataframe[categorical_col].value_counts(),
-                        "Ratio": 100 * dataframe[categorical_col].value_counts() / len(dataframe)}), end="\n\n\n")
+    target_mean = dataframe.groupby(categorical_col)[target].mean()
+    count = dataframe[categorical_col].value_counts()
+    ratio = 100 * dataframe[categorical_col].value_counts() / len(dataframe)
+    print(pd.DataFrame({"TARGET_MEAN": target_mean, "Count": count, "Ratio": ratio}), end="\n\n\n")
 
 for col in cat_cols:
     target_summary_with_cat(df, "Churn", col)
-
 
 ##################################
 # KORELASYON
 ##################################
 
-df[num_cols].corr()
-
-f, ax = plt.subplots(figsize=[18, 13])
-sns.heatmap(df[num_cols].corr(), annot=True, fmt=".2f", ax=ax, cmap="magma")
-ax.set_title("Correlation Matrix", fontsize=20)
-plt.show()
-
-df.select_dtypes(include=[np.number]).corrwith(df["Churn"].astype(float)).sort_values(ascending=False)
-
-
-##################################
-# GÖREV 2: FEATURE ENGINEERING
-##################################
+num_df = df.select_dtypes(include=[np.number])
+num_df.corr()
+num_df.corrwith(df["Churn"].astype(float)).sort_values(ascending=False)
 
 ##################################
 # EKSİK DEĞER ANALİZİ
@@ -166,11 +136,7 @@ def missing_values_table(dataframe, na_name=False):
         return na_columns
 
 na_columns = missing_values_table(df, na_name=True)
-
 df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
-
-df.isnull().sum()
-
 
 ##################################
 # AYKIRI DEĞER ANALİZİ
@@ -200,7 +166,6 @@ for col in num_cols:
     print(col, check_outlier(df, col))
     if check_outlier(df, col):
         replace_with_thresholds(df, col)
-
 
 ##################################
 # ÖZELLİK ÇIKARIMI
@@ -236,10 +201,6 @@ df["NEW_AVG_Charges"] = df["TotalCharges"] / (df["tenure"] + 1)
 df["NEW_Increase"] = df["NEW_AVG_Charges"] / df["MonthlyCharges"]
 df["NEW_AVG_Service_Fee"] = df["MonthlyCharges"] / (df['NEW_TotalServices'] + 1)
 
-df.head()
-df.shape
-
-
 ##################################
 # ENCODING
 ##################################
@@ -264,9 +225,6 @@ def one_hot_encoder(dataframe, categorical_cols, drop_first=False):
 
 df = one_hot_encoder(df, cat_cols, drop_first=True)
 
-df.head()
-
-
 ##################################
 # MODELLEME
 ##################################
@@ -276,22 +234,8 @@ X = df.drop(["Churn", "customerID"], axis=1)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=17)
 
-# Test setinden rastgele bir müşteri seçelim (örneğin 10. sıradaki)
-index = 10
-sample_customer = X_test.iloc[[index]]
-real_status = y_test.iloc[index]
-
-print(f"--- MÜŞTERİ TESTİ ---")
-print(f"Gerçek Durum: {'Ayrıldı' if real_status == 1 else 'Ayrılmadı'}")
-
-
 ##################################
 # OPTİMİZE EDİLMİŞ FİNAL MODEL
-# Base Model  → AUC: 0.74 | Accuracy: 0.79
-# CatBoost    → AUC: 0.824 (default)
-# XGBoost     → AUC: 0.8099
-# LightGBM    → AUC: 0.8217
-# Optuna (50 trial) → AUC: 0.8341 ✅ En iyi
 ##################################
 
 catboost_model = CatBoostClassifier(
