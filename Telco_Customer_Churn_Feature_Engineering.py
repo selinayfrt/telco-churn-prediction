@@ -255,7 +255,3 @@ print(f"Precision: {round(precision_score(y_test, y_pred), 4)}")
 print(f"F1:        {round(f1_score(y_test, y_pred), 4)}")
 print(f"AUC:       {round(roc_auc_score(y_test, catboost_model.predict_proba(X_test)[:, 1]), 4)}")
 
-prediction = catboost_model.predict(sample_customer)[0]
-probability = catboost_model.predict_proba(sample_customer)[0][1]
-print(f"Modelin Tahmini: {'Ayrılacak' if prediction == 1 else 'Ayrılmayacak'}")
-print(f"Modelin Ayrılma Olasılığı Tahmini: %{round(probability * 100, 2)}")
