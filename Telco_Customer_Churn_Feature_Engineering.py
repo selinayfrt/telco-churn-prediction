@@ -25,13 +25,13 @@ df["Churn"] = df["Churn"].apply(lambda x: 1 if x == "Yes" else 0)
 # ── Yardımcı Fonksiyonlar ────────────────────────────────────────────────────
 
 def grab_col_names(dataframe, cat_th=10, car_th=20):
-    cat_cols = [col for col in dataframe.columns if dataframe[col].dtypes == "O"]
-    num_but_cat = [col for col in dataframe.columns if dataframe[col].nunique() < cat_th and dataframe[col].dtypes != "O"]
-    cat_but_car = [col for col in dataframe.columns if dataframe[col].nunique() > car_th and dataframe[col].dtypes == "O"]
-    cat_cols = cat_cols + num_but_cat
-    cat_cols = [col for col in cat_cols if col not in cat_but_car]
-    num_cols = [col for col in dataframe.columns if dataframe[col].dtypes != "O"]
-    num_cols = [col for col in num_cols if col not in num_but_cat]
+    # select_dtypes ile pyarrow large_string uyumlu sayısal kolon tespiti
+    num_cols_all = dataframe.select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = [col for col in dataframe.columns if col not in num_cols_all]
+    num_but_cat = [col for col in num_cols_all if dataframe[col].nunique() < cat_th]
+    cat_but_car = [col for col in cat_cols if dataframe[col].nunique() > car_th]
+    cat_cols = [col for col in cat_cols if col not in cat_but_car] + num_but_cat
+    num_cols = [col for col in num_cols_all if col not in num_but_cat]
     return cat_cols, num_cols, cat_but_car
 
 def outlier_thresholds(dataframe, col_name, q1=0.05, q3=0.95):
