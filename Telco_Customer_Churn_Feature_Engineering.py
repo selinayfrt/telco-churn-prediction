@@ -136,7 +136,9 @@ def missing_values_table(dataframe, na_name=False):
         return na_columns
 
 na_columns = missing_values_table(df, na_name=True)
-df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
+
+# FIX: inplace=True kaldırıldı (pandas 2.x uyumlu)
+df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
 
 ##################################
 # AYKIRI DEĞER ANALİZİ
@@ -254,4 +256,3 @@ print(f"Recall:    {round(recall_score(y_test, y_pred), 4)}")
 print(f"Precision: {round(precision_score(y_test, y_pred), 4)}")
 print(f"F1:        {round(f1_score(y_test, y_pred), 4)}")
 print(f"AUC:       {round(roc_auc_score(y_test, catboost_model.predict_proba(X_test)[:, 1]), 4)}")
-
