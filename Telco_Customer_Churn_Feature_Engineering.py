@@ -39,7 +39,8 @@ def check_df(dataframe, head=5):
     print("##################### NA #####################")
     print(dataframe.isnull().sum())
     print("##################### Quantiles #####################")
-    print(dataframe.select_dtypes(include=[np.number]).quantile([0, 0.05, 0.50, 0.95, 0.99, 1]).T)
+    num_only = dataframe.select_dtypes(include=[np.number])
+    print(num_only.quantile([0, 0.05, 0.50, 0.95, 0.99, 1]).T)
 
 check_df(df)
 
@@ -119,7 +120,7 @@ for col in cat_cols:
 ##################################
 
 num_df = df.select_dtypes(include=[np.number])
-num_df.corr()
+num_df.corr(numeric_only=True)
 num_df.corrwith(df["Churn"].astype(float)).sort_values(ascending=False)
 
 ##################################
