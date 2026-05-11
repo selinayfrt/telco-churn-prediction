@@ -1,55 +1,3 @@
-##############################
-# Telco Customer Churn Feature Engineering
-##############################
-
-# Problem : Şirketi terk edecek müşterileri tahmin edebilecek bir makine öğrenmesi modeli geliştirilmesi istenmektedir.
-# Modeli geliştirmeden önce gerekli olan veri analizi ve özellik mühendisliği adımlarını gerçekleştirmeniz beklenmektedir.
-
-# Telco müşteri churn verileri, üçüncü çeyrekte Kaliforniya'daki 7043 müşteriye ev telefonu ve İnternet hizmetleri sağlayan
-# hayali bir telekom şirketi hakkında bilgi içerir. Hangi müşterilerin hizmetlerinden ayrıldığını, kaldığını veya hizmete kaydolduğunu içermektedir.
-
-# 21 Değişken 7043 Gözlem
-
-# CustomerId : Müşteri İd'si
-# Gender : Cinsiyet
-# SeniorCitizen : Müşterinin yaşlı olup olmadığı (1, 0)
-# Partner : Müşterinin bir ortağı olup olmadığı (Evet, Hayır) ? Evli olup olmama
-# Dependents : Müşterinin bakmakla yükümlü olduğu kişiler olup olmadığı (Evet, Hayır) (Çocuk, anne, baba, büyükanne)
-# tenure : Müşterinin şirkette kaldığı ay sayısı
-# PhoneService : Müşterinin telefon hizmeti olup olmadığı (Evet, Hayır)
-# MultipleLines : Müşterinin birden fazla hattı olup olmadığı (Evet, Hayır, Telefon hizmeti yok)
-# InternetService : Müşterinin internet servis sağlayıcısı (DSL, Fiber optik, Hayır)
-# OnlineSecurity : Müşterinin çevrimiçi güvenliğinin olup olmadığı (Evet, Hayır, İnternet hizmeti yok)
-# OnlineBackup : Müşterinin online yedeğinin olup olmadığı (Evet, Hayır, İnternet hizmeti yok)
-# DeviceProtection : Müşterinin cihaz korumasına sahip olup olmadığı (Evet, Hayır, İnternet hizmeti yok)
-# TechSupport : Müşterinin teknik destek alıp almadığı (Evet, Hayır, İnternet hizmeti yok)
-# StreamingTV : Müşterinin TV yayını olup olmadığı (Evet, Hayır, İnternet hizmeti yok)
-# StreamingMovies : Müşterinin film akışı olup olmadığı (Evet, Hayır, İnternet hizmeti yok)
-# Contract : Müşterinin sözleşme süresi (Aydan aya, Bir yıl, İki yıl)
-# PaperlessBilling : Müşterinin kağıtsız faturası olup olmadığı (Evet, Hayır)
-# PaymentMethod : Müşterinin ödeme yöntemi (Elektronik çek, Posta çeki, Banka havalesi (otomatik), Kredi kartı (otomatik))
-# MonthlyCharges : Müşteriden aylık olarak tahsil edilen tutar
-# TotalCharges : Müşteriden tahsil edilen toplam tutar
-# Churn : Müşterinin kullanıp kullanmadığı (Evet veya Hayır)
-
-
-# GÖREV 1: KEŞİFCİ VERİ ANALİZİ
-           # Adım 1: Genel resmi inceleyiniz.
-           # Adım 2: Numerik ve kategorik değişkenleri yakalayınız.
-           # Adım 3: Numerik ve kategorik değişkenlerin analizini yapınız.
-           # Adım 4: Hedef değişken analizi yapınız.
-           # Adım 5: Aykırı gözlem analizi yapınız.
-           # Adım 6: Eksik gözlem analizi yapınız.
-           # Adım 7: Korelasyon analizi yapınız.
-
-# GÖREV 2: FEATURE ENGINEERING
-           # Adım 1: Eksik ve aykırı değerler için gerekli işlemleri yapınız.
-           # Adım 2: Yeni değişkenler oluşturunuz.
-           # Adım 3: Encoding işlemlerini gerçekleştiriniz.
-           # Adım 4: Numerik değişkenler için standartlaştırma yapınız.
-           # Adım 5: Model oluşturunuz.
-
-
 # Gerekli Kütüphane ve Fonksiyonlar
 import numpy as np
 import pandas as pd
@@ -166,7 +114,7 @@ for col in num_cols:
 ##################################
 
 def target_summary_with_num(dataframe, target, numerical_col):
-    print(dataframe.groupby(target).agg({numerical_col: "mean"}), end="\n\n\n")
+    print(dataframe.groupby(target).agg({numerical_col: "mean"}, numeric_only=True), end="\n\n\n")
 
 for col in num_cols:
     target_summary_with_num(df, "Churn", col)
@@ -197,7 +145,7 @@ sns.heatmap(df[num_cols].corr(), annot=True, fmt=".2f", ax=ax, cmap="magma")
 ax.set_title("Correlation Matrix", fontsize=20)
 plt.show()
 
-df.select_dtypes(include=[np.number]).corrwith(df["Churn"]).sort_values(ascending=False)
+df.select_dtypes(include=[np.number]).corrwith(df["Churn"].astype(float)).sort_values(ascending=False)
 
 
 ##################################
