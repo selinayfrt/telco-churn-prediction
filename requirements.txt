@@ -1,10 +1,11 @@
 streamlit
 plotly
-pandas
+pandas==2.0.3
 numpy
 catboost
 scikit-learn
 crewai
+crewai[litellm]
 crewai-tools
 groq
 shap
@@ -13,3 +14,4 @@ xgboost
 lightgbm
 seaborn
 optuna
+litellm
