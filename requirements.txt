@@ -5,7 +5,6 @@ numpy
 catboost
 scikit-learn
 crewai
-crewai[litellm]
 crewai-tools
 groq
 shap
