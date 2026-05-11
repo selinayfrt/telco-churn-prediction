@@ -67,7 +67,7 @@ pd.set_option('display.width', 170)
 pd.set_option('display.max_rows', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
-df = pd.read_csv("C:/Users/90545/telcocustomerchurn/Telco-Customer-Churn.csv")
+df = pd.read_csv("Telco-Customer-Churn.csv")
 df.head()
 df.shape
 df.info()
